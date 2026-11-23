@@ -1,5 +1,4 @@
 
-Build apk · YML
 name: Build APK
  
 on:
@@ -82,4 +81,3 @@ jobs:
           name: Bilty Sticker APK ${{ github.run_number }}
           files: BiltySticker.apk
  
-Claude finished the response
