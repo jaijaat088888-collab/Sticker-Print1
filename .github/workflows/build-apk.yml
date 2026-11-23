@@ -1,64 +1,85 @@
-name: Build APK
 
+Build apk · YML
+name: Build APK
+ 
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
-
+ 
 permissions:
   contents: write
-
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+ 
+      - name: Files check (kaunsi file kam hai)
+        run: |
+          echo "Repo me ye files hain:"
+          ls -la
+          missing=0
+          for f in index.html package.json capacitor.config.json patch_android.py BtPrinterPlugin.java MainActivity.java; do
+            if [ ! -f "$f" ]; then
+              echo "::error title=File kam hai::$f repo ke sabse upar (root me) nahi mili. Isko upload karo."
+              missing=1
+            fi
+          done
+          if [ "$missing" = "1" ]; then exit 1; fi
+ 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
+ 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
+ 
       - uses: android-actions/setup-android@v3
-
+ 
       - name: Web files ko www me rakho
         run: |
           mkdir -p www
-          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png www/
-
+          cp index.html www/
+          for f in manifest.webmanifest sw.js icon-192.png icon-512.png; do
+            if [ -f "$f" ]; then cp "$f" www/; fi
+          done
+          ls -la www
+ 
       - name: Install
         run: npm install
-
+ 
       - name: Android project banao
         run: npx cap add android
-
+ 
       - name: Bluetooth plugin aur permissions jodo
         run: python3 patch_android.py
-
+ 
       - name: Sync
         run: npx cap sync android
-
+ 
       - name: APK build
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-
+ 
       - name: APK ka naam
         run: cp android/app/build/outputs/apk/debug/app-debug.apk BiltySticker.apk
-
+ 
       - uses: actions/upload-artifact@v4
         with:
           name: BiltySticker-apk
           path: BiltySticker.apk
-
+ 
       - name: Release me daalo (seedha download link)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
           name: Bilty Sticker APK ${{ github.run_number }}
           files: BiltySticker.apk
+ 
+Claude finished the response
